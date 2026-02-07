@@ -2,6 +2,7 @@
 import { userModel } from "../models/userSchema.js"
 import { userValidation } from "../validator/userValidation.js"
 import bcrypt from "bcryptjs"
+import { generateToken } from "../utils/generateToken.js"
 
 export const getHome = (req, res) => {
    res.send("This is the first route")
@@ -11,7 +12,6 @@ export const getHome = (req, res) => {
 export const getAbout = (req, res) => {
     res.send("This is the about route")
 }
-
 
 // Signup process
 export const postUser = async (req, res) => {
@@ -37,6 +37,16 @@ export const postUser = async (req, res) => {
                 email,
                 password
             })
+
+            const token = await generateToken(newUser._id)
+
+            res.cookie("token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV !== "development",
+                sameSite: "lax",
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            })
+
 
             return res.status(201).json({
                 message: "User created successfully",
