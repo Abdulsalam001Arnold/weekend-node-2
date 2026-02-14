@@ -103,9 +103,55 @@ export const loginUser = async (req, res) => {
             email: existingUser.email
         }
 
+        const token = await generateToken(existingUser._id)
+
+                    res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV !== "development",
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        })
+
         return res.status(200).json({
             message: "Login successful",
             data: theUser
+        })
+    } catch (err) {
+        console.error(err)
+        throw new Error(err)
+    }
+}
+
+
+export const singleUser = async (req, res, next) => {
+    const { id } = req.params
+
+    try {
+        const user = await userModel.findById(id).select("-password")
+
+        if(!user) {
+            return res.status(404).json({
+                message: `User with id:${id} not found`
+            })
+        }
+
+        return res.status(200).json({
+            message: "User found",
+            data: user
+        })
+    } catch (err) {
+        console.error(err)
+        throw new Error(err)
+    }
+}
+
+
+export const logOut = async (req, res) => {
+    try {
+        res.clearCookie("token")
+
+        return res.status(200).json({
+            message: "Logout successful"
         })
     } catch (err) {
         console.error(err)
